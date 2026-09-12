@@ -29,11 +29,17 @@ faire avant `npm publish` :
       pour toute nouvelle ressource.
 - [ ] Vérifier le nom exact des codes réseau (`network`) et méthodes de payout
       (`method`) attendus par l'API — ce SDK les documente comme des chaînes
-      libres (`"MTN_BJ"` à titre d'exemple), jamais validées côté TypeScript.
+      libres (`"mtn_bj"` à titre d'exemple), jamais validées côté TypeScript.
       Un futur `alphapay.networks.list()` (endpoint `/networks/` existant côté
       API, pas encore dans ce SDK) permettrait de les typer en enum.
-- [ ] Choisir le nom de package npm définitif (`@alphapay/node` est un nom
-      provisoire — vérifier qu'il est disponible / que l'org existe sur npm).
+- [x] 2026-09-12 — Nom de package tranché : **`alphapay-node`** (non scopé),
+      pas `@alphapay/node`. Le scope `@alphapay` existe déjà sur npm mais son
+      seul membre est un compte tiers dont les identifiants ne sont pas
+      disponibles (`npm org ls alphapay` → un seul membre, ni `chacour` ni
+      aucun autre compte accessible) — `npm publish` y échoue en 404
+      (permission refusée, masquée en 404 plutôt qu'en 403). Un nom non
+      scopé retire le problème : publié directement sous le compte qui
+      l'exécute, aucune org à administrer.
 
 ## Souhaitable avant v1.0.0
 
@@ -52,6 +58,7 @@ faire avant `npm publish` :
       même schéma.
 - [ ] Exemples d'intégration complets (`examples/express-webhook`,
       `examples/payment-link-checkout`) plutôt que les extraits du README.
+      (Un premier niveau existe maintenant dans `EXAMPLES.md`, voir "Fait".)
 
 ## Fait
 
@@ -87,3 +94,9 @@ faire avant `npm publish` :
       `msisdn`. Aussi documenté que `Customer.country`/
       `UpsertCustomerParams.country` est un UUID (`geo.Country`), pas un code
       ISO2 — à la différence de `country` sur les transactions/paiements.
+- [x] 2026-09-12 — `EXAMPLES.md` créé : 9 exemples TypeScript complets
+      (checkout, softpay, lien de paiement, solde, clients, webhooks,
+      reversements/transferts wallet, clés API/whitelist IP, gestion des
+      erreurs) — les 10 blocs de code extraits et vérifiés par
+      `tsc --noEmit` dans un projet séparé référençant les vrais types
+      compilés (`dist/index.d.ts`), pas seulement relus.

@@ -1,4 +1,4 @@
-# @alphapay/node
+# alphapay-node
 
 SDK Node.js / TypeScript officiel pour l'API AlphaPay (agrégateur de paiement multi-gateway).
 
@@ -17,13 +17,13 @@ secrète dans une app mobile — voir la note de sécurité plus bas).
 ## Installation
 
 ```bash
-npm install @alphapay/node
+npm install alphapay-node
 ```
 
 ## Démarrage rapide
 
 ```ts
-import { AlphaPayClient } from "@alphapay/node";
+import { AlphaPayClient } from "alphapay-node";
 
 const alphapay = new AlphaPayClient({
   apiKey: process.env.ALPHAPAY_SECRET_KEY!, // sk_live_... ou sk_test_...
@@ -90,7 +90,7 @@ Toute erreur API est normalisée en une sous-classe de `AlphaPayError` — jamai
 un code HTTP brut à interpréter soi-même :
 
 ```ts
-import { AlphaPayClient, AlphaPayValidationError, AlphaPayRateLimitError } from "@alphapay/node";
+import { AlphaPayClient, AlphaPayValidationError, AlphaPayRateLimitError } from "alphapay-node";
 
 try {
   await alphapay.settlements.create({ country: "BJ", requested_amount: 100, payout_method: methodId });
@@ -121,7 +121,7 @@ page (`count` présent) que sur `transactions.list()`, paginée par curseur
 `count` ; y passer un `page` n'aurait aucun effet) :
 
 ```ts
-import { paginate } from "@alphapay/node";
+import { paginate } from "alphapay-node";
 
 for await (const tx of paginate(alphapay.http, alphapay.transactions.list({ status: "SUCCESS" }))) {
   console.log(tx.reference, tx.amounts.net);
@@ -135,7 +135,7 @@ Reproduit exactement le schéma de signature d'AlphaPayBack (HMAC-SHA256 de
 300s) :
 
 ```ts
-import { verifyWebhookSignature, AlphaPayWebhookSignatureError } from "@alphapay/node";
+import { verifyWebhookSignature, AlphaPayWebhookSignatureError } from "alphapay-node";
 import express from "express";
 
 const app = express();
