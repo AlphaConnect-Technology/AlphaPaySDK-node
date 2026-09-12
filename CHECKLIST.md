@@ -1,10 +1,13 @@
-# Avant publication npm
+# Suivi qualité — publié sur npm (v0.1.0)
 
-Ce SDK est fonctionnel et testé (`npm test`, `npm run build` passent tous les
-deux). `transactions.list()` a été vérifié une fois contre une vraie clé
-LIVE (lecture seule) — voir "Fait" plus bas pour ce que ça a révélé et
-corrigé. Le reste des ressources n'a tourné que contre un `fetch` simulé. À
-faire avant `npm publish` :
+**Publié** sous le nom
+[`alphapay-node`](https://www.npmjs.com/package/alphapay-node) (`@alphapay/node`
+était bloqué par un scope npm déjà pris par un compte tiers inaccessible —
+voir l'entrée du 2026-09-12 plus bas). Ce SDK est fonctionnel et testé
+(`npm test`, `npm run build` passent tous les deux). `transactions.list()` a
+été vérifié une fois contre une vraie clé LIVE (lecture seule) — voir "Fait"
+plus bas pour ce que ça a révélé et corrigé. Le reste des ressources n'a
+tourné que contre un `fetch` simulé. Reste avant une v1.0.0 :
 
 ## Bloquant
 
@@ -40,6 +43,9 @@ faire avant `npm publish` :
       (permission refusée, masquée en 404 plutôt qu'en 403). Un nom non
       scopé retire le problème : publié directement sous le compte qui
       l'exécute, aucune org à administrer.
+- [x] 2026-09-12 — **`npm publish` exécuté avec succès** :
+      `alphapay-node@0.1.0` en ligne sur le registre npm public, sous le
+      compte `alphapay1 <support@alphapay.me>`.
 
 ## Souhaitable avant v1.0.0
 
