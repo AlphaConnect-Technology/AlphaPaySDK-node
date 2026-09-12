@@ -2,13 +2,6 @@
 
 SDK Node.js / TypeScript officiel pour l'API AlphaPay (agrégateur de paiement multi-gateway).
 
-> **Statut : v0.1.0, publié sur npm** sous le nom
-> [`alphapay-node`](https://www.npmjs.com/package/alphapay-node). Couvre les
-> ressources marchand principales (paiements, retraits, liens de paiement,
-> checkout, reversements, wallets, webhooks, clients, clés API). Généré et
-> vérifié contre le schéma OpenAPI réel d'AlphaPayBack (`drf-spectacular`) —
-> voir [CHECKLIST.md](./CHECKLIST.md) pour ce qui reste à faire avant une
-> v1.0.0.
 
 Fonctionne aussi tel quel dans **React Native** (même runtime JS, pas de
 dépendance Node-only comme `fs`) — à l'exception de `verifyWebhookSignature`
