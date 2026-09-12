@@ -3,6 +3,17 @@
   "version": "0.1.0",
   "description": "Official Node.js / TypeScript SDK for the AlphaPay payment aggregator API.",
   "license": "MIT",
+  "homepage": "https://github.com/AlphaConnect-Technology/AlphaPaySDK-node#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlphaConnect-Technology/AlphaPaySDK-node.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AlphaConnect-Technology/AlphaPaySDK-node/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
