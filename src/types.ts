@@ -127,10 +127,31 @@ export interface VerifyResult extends Transaction {
   instructions?: unknown;
 }
 
+/**
+ * Identité du client pour un push softpay direct — cf.
+ * `apps.transactions.serializers.checkout.SoftpayCustomerSerializer` : les
+ * 4 champs sont TOUS obligatoires (pas de page hébergée où le client les
+ * saisirait lui-même après coup, contrairement à une CheckoutSession).
+ * Il n'y a PAS de champ `full_name` côté API — un ancien exemple de ce SDK
+ * l'utilisait par erreur, jamais accepté par le serveur.
+ */
 export interface SoftpayCustomer {
-  full_name?: string;
-  email?: string;
+  email: string;
+  first_name: string;
+  last_name: string;
   phone: string;
+}
+
+/**
+ * Identité du client pour un payout — cf. `PayoutInitializeSerializer.customer`
+ * (`CustomerCheckoutSerializer`) : email/prénom/nom requis, téléphone optionnel
+ * (c'est `recipient.msisdn` ci-dessous qui porte le numéro à créditer).
+ */
+export interface PayoutCustomer {
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
 }
 
 export interface SoftpayInitializeParams {
@@ -142,7 +163,7 @@ export interface SoftpayInitializeParams {
   country: string;
   description?: string;
   customer: SoftpayCustomer;
-  /** Code réseau (ex. "MTN_BJ") — cf. GET /networks/. */
+  /** Code réseau (ex. "mtn_bj") — cf. GET /networks/. */
   network: string;
   return_url?: string;
   metadata?: Record<string, unknown>;
@@ -152,12 +173,14 @@ export interface SoftpayInitializeParams {
   otp?: string;
 }
 
+/**
+ * Destinataire du retrait — cf. `RecipientSerializer` : un SEUL champ,
+ * `msisdn`. Un ancien exemple de ce SDK inventait `full_name`/`account_number`/
+ * `bank_name`, jamais reconnus par l'API (c'est `customer` ci-dessus qui
+ * porte l'identité, `method` qui porte le réseau/la banque).
+ */
 export interface PayoutRecipient {
-  full_name?: string;
-  phone?: string;
-  account_number?: string;
-  bank_name?: string;
-  [key: string]: unknown;
+  msisdn: string;
 }
 
 export interface PayoutInitializeParams {
@@ -166,7 +189,7 @@ export interface PayoutInitializeParams {
   currency: string;
   country: string;
   description?: string;
-  customer: SoftpayCustomer;
+  customer: PayoutCustomer;
   metadata?: Record<string, unknown>;
   /** Code de méthode de retrait (réseau mobile money ou "BANK_TRANSFER"). */
   method: string;
@@ -176,6 +199,13 @@ export interface PayoutInitializeParams {
 }
 
 export type PaymentLinkAmountType = "FIXED" | "FREE";
+
+/** Un champ personnalisé collecté sur la page publique du lien (cf. `PaymentLink.custom_fields`). */
+export interface PaymentLinkCustomField {
+  key: string;
+  label: string;
+  required?: boolean;
+}
 
 export interface PaymentLink {
   id: string;
@@ -194,6 +224,13 @@ export interface PaymentLink {
   expires_at?: string | null;
   usage_limit?: number | null;
   usage_count: number;
+  require_phone?: boolean;
+  facebook_pixel_id?: string;
+  google_ads_id?: string;
+  custom_fields?: PaymentLinkCustomField[];
+  /** true (défaut) : la page interne affiche sa propre confirmation ; false : redirige vers `redirect_url` (alors obligatoire). */
+  show_confirmation_page?: boolean;
+  redirect_url?: string;
   created_at: string;
   updated_at: string;
 }
@@ -207,6 +244,51 @@ export interface CreatePaymentLinkParams {
   currency: string;
   expires_at?: string | null;
   usage_limit?: number | null;
+  require_phone?: boolean;
+  facebook_pixel_id?: string;
+  google_ads_id?: string;
+  custom_fields?: PaymentLinkCustomField[];
+  show_confirmation_page?: boolean;
+  redirect_url?: string;
+}
+
+/** Réponse de `GET /payment-links/public/{slug}/` — ce que voit la page publique du lien, jamais l'id interne du marchand. */
+export interface PublicPaymentLink {
+  name: string;
+  merchant_name: string;
+  description?: string;
+  amount_type: PaymentLinkAmountType;
+  amount?: string | null;
+  min_amount?: string | null;
+  currency: string;
+  slug: string;
+  is_usable: boolean;
+  unusable_reason?: string;
+  require_phone: boolean;
+  facebook_pixel_id?: string;
+  google_ads_id?: string;
+  custom_fields?: PaymentLinkCustomField[];
+}
+
+/** Corps de `POST /payment-links/public/{slug}/checkout/` — pas de pays/réseau : ça se choisit sur la CheckoutSession créée en retour. */
+export interface CreatePublicCheckoutParams {
+  /** Requis si le lien est à montant libre (`amount_type: "FREE"`) ; ignoré pour un lien à montant fixe. */
+  amount?: number | string;
+  customer: {
+    email: string;
+    first_name: string;
+    last_name: string;
+    /** Requis si `PublicPaymentLink.require_phone` est true. */
+    phone?: string;
+  };
+  /** Valeurs des champs définis par `PublicPaymentLink.custom_fields`, indexées par leur `key`. */
+  custom_field_values?: Record<string, string | number | boolean | null>;
+}
+
+/** Réponse de `POST /payment-links/public/{slug}/checkout/` — `slug` est celui de la nouvelle CheckoutSession one-shot créée, à passer au SDK checkout public (mobile/web) pour la suite du paiement. */
+export interface PublicCheckoutResult {
+  slug: string;
+  checkout_url: string;
 }
 
 export type CheckoutSessionStatus = "PENDING" | "PAID" | "EXPIRED" | "CANCELLED";
@@ -251,6 +333,7 @@ export interface Customer {
   id: string;
   merchant?: string;
   phone?: string | null;
+  /** UUID de `geo.Country` (ForeignKey côté API) — PAS un code ISO2 ("BJ"). Référentiel pas encore couvert par ce SDK. */
   country: string;
   full_name?: string;
   email?: string;
@@ -260,6 +343,7 @@ export interface Customer {
 
 export interface UpsertCustomerParams {
   phone?: string;
+  /** UUID de `geo.Country` (ForeignKey côté API) — PAS un code ISO2 ("BJ"), contrairement à `country` sur les transactions/paiements. Référentiel pas encore couvert par ce SDK. */
   country: string;
   full_name?: string;
   email?: string;
@@ -388,6 +472,8 @@ export interface MerchantWebhook {
   signing_secret?: string;
   environment: Environment;
   is_active?: boolean;
+  /** Restreint ce endpoint aux événements d'UN lien de paiement précis — `null`/absent : tous les liens du marchand. */
+  payment_link?: string | null;
   created_by_member?: string | null;
   created_at: string;
   updated_at: string;
@@ -399,6 +485,8 @@ export interface CreateWebhookParams {
   environment: Environment;
   /** Laisser vide pour qu'AlphaPay génère un secret sécurisé. */
   signing_secret?: string;
+  /** Restreint ce endpoint aux événements d'UN lien de paiement précis (son `id`) — omis : tous les liens du marchand. */
+  payment_link?: string | null;
 }
 
 export type WebhookLogStatus = "PENDING" | "SUCCESS" | "FAILED" | "EXHAUSTED";

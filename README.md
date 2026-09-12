@@ -35,14 +35,43 @@ const payment = await alphapay.transactions.payin.initialize(
     amount: 5000,
     currency: "XOF",
     country: "BJ",
-    network: "MTN_BJ", // cf. alphapay.networks — à venir dans une version future
-    customer: { full_name: "Ayaba Client", phone: "+22900000000" },
+    network: "mtn_bj", // cf. alphapay.networks — à venir dans une version future
+    customer: { email: "ayaba@exemple.com", first_name: "Ayaba", last_name: "Client", phone: "+22900000000" },
     description: "Commande #1234",
   },
   { idempotencyKey: true } // recommandé : évite un double push en cas de retry réseau
 );
 
 console.log(payment.status, payment.instructions);
+```
+
+### Options avancées des liens de paiement
+
+`paymentLinks.create()`/`update()` acceptent aussi `require_phone`,
+`facebook_pixel_id`, `google_ads_id`, `custom_fields`,
+`show_confirmation_page` et `redirect_url`. `getPublic()`/`createPublicCheckout()`
+sont les 2 seules méthodes de cette ressource qui n'exigent PAS de clé secrète
+(page publique du lien) — ne les appelez jamais depuis un front avec votre
+clé API en dur, seul `slug` doit y circuler.
+
+```ts
+const link = await alphapay.paymentLinks.create({
+  name: "Facture #42",
+  amount_type: "FIXED",
+  amount: 5000,
+  currency: "XOF",
+  google_ads_id: "AW-123456789",
+  custom_fields: [{ key: "reference_client", label: "Référence client", required: true }],
+});
+
+// Côté public (mobile/web), sans clé API :
+const publicLink = await alphapay.paymentLinks.getPublic(link.slug);
+const checkout = await alphapay.paymentLinks.createPublicCheckout(link.slug, {
+  customer: { email: "client@exemple.com", first_name: "Client", last_name: "Test" },
+  custom_field_values: { reference_client: "CMD-42" },
+});
+// `checkout.slug` est une CheckoutSession one-shot : pilotez la suite (réseau, push, statut)
+// avec le SDK checkout public (mobile/web), jamais avec ce client à clé secrète.
 ```
 
 ## Sandbox vs live
@@ -147,6 +176,7 @@ le `slug` de la session — jamais la clé secrète.
 |---|---|---|
 | `transactions` | `list`, `get`, `export`, `downloadInvoice`, `payin.{initialize,verify,retry,confirmOtp}`, `payout.{initialize,verify}` | ✅ |
 | `paymentLinks` | `list`, `create`, `get`, `update`, `delete` | ✅ |
+| `paymentLinks` | `getPublic`, `createPublicCheckout` | publiques (pas de clé requise) |
 | `checkoutSessions` | `list`, `create`, `get`, `cancel` | ✅ |
 | `customers` | `list`, `create`, `get`, `update`, `delete`, `transactions` | ✅ |
 | `settlements` | `list`, `create`, `get`, `cancel` | ❌ dashboard-only |

@@ -70,3 +70,20 @@ faire avant `npm publish` :
 - [x] `list()`/`get()` des 9 ressources vérifiés en lecture seule contre une
       vraie clé live — formes de réponse correctes, restrictions
       `dashboard_only` documentées (voir tableau README, colonne "Via clé API").
+- [x] 2026-09-12 — synchronisé avec le SDK PHP (commit "Add public payment
+      link features") : `paymentLinks.getPublic()`/`createPublicCheckout()`
+      (les 2 seules méthodes publiques de ce SDK à clé secrète — pensées pour
+      être appelées depuis un backend qui relaie ensuite le `slug` à un
+      client, jamais depuis un front avec la clé en dur), `create()`/
+      `update()` étendus (`require_phone`, `facebook_pixel_id`,
+      `google_ads_id`, `custom_fields`, `show_confirmation_page`,
+      `redirect_url`), `webhookEndpoints.create()`/`update()` + `payment_link`.
+      À cette occasion, corrigé deux formes de payload **fausses** trouvées
+      dans `types.ts` (jamais acceptées par l'API, vérifié contre
+      `apps.transactions.serializers.checkout`) : `SoftpayCustomer` utilisait
+      `full_name` au lieu de `first_name`/`last_name` (+ email/phone en
+      optionnel alors qu'obligatoires), `PayoutRecipient` inventait
+      `full_name`/`account_number`/`bank_name` là où l'API n'attend que
+      `msisdn`. Aussi documenté que `Customer.country`/
+      `UpsertCustomerParams.country` est un UUID (`geo.Country`), pas un code
+      ISO2 — à la différence de `country` sur les transactions/paiements.

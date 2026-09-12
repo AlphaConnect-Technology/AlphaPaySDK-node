@@ -47,7 +47,7 @@ export class WebhookEndpointsResource {
   }
 
   /** ⚠️ Dashboard-only — 403 via clé API. */
-  update(id: string, params: Partial<Pick<MerchantWebhook, "url" | "description" | "is_active">>): Promise<MerchantWebhook> {
+  update(id: string, params: Partial<Pick<MerchantWebhook, "url" | "description" | "is_active" | "payment_link">>): Promise<MerchantWebhook> {
     return this.http.request("PATCH", `/merchant-webhooks/${id}/`, { body: params });
   }
 

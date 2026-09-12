@@ -98,7 +98,13 @@ test("sends a generated Idempotency-Key when requested", async () => {
   });
 
   await client.transactions.payin.initialize(
-    { amount: 100, currency: "XOF", country: "BJ", network: "MTN_BJ", customer: { phone: "+22900000000" } },
+    {
+      amount: 100,
+      currency: "XOF",
+      country: "BJ",
+      network: "mtn_bj",
+      customer: { email: "client@exemple.com", first_name: "Client", last_name: "Test", phone: "+22900000000" },
+    },
     { idempotencyKey: true }
   );
 
