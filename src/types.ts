@@ -383,21 +383,37 @@ export interface CreateSettlementParams {
   payout_method: string;
 }
 
-export type WalletTransferStatus = "PENDING" | "APPROVED" | "PROCESSING" | "SUCCESS" | "FAILED" | "REJECTED";
+/** `PENDING` -> `COMPLETED` (crédité) ou `REJECTED` (refusé par un admin AlphaPay, cf. `rejection_reason`). */
+export type WalletTransferStatus = "PENDING" | "COMPLETED" | "REJECTED";
+
+/** Source de l'auto-approbation d'un transfert `COMPLETED` sans admin — `""` sinon. */
+export type WalletTransferAutoApprovalSource = "GLOBAL" | "MERCHANT" | "";
 
 export interface WalletTransfer {
   id: string;
   reference: string;
   merchant?: string;
+  merchant_name: string;
+  requested_by_member: string | null;
+  /** Code ISO2 (ex. "BJ"). */
   from_country: string;
+  /** Code ISO2 (ex. "CM"). */
   to_country: string;
   from_amount: string;
   from_currency: string;
+  /** Montant crédité sur le wallet cible, déjà NET de `fee_amount`. */
   to_amount: string;
   to_currency: string;
+  /** Taux figé au moment de la demande. */
   exchange_rate: string;
+  /** Frais plateforme, prélevé sur le montant converti (devise cible). */
+  fee_amount: string;
+  fee_percent_applied: string;
   status: WalletTransferStatus;
+  approved_by_admin: string | null;
+  approved_by_admin_name: string | null;
   approved_at: string | null;
+  auto_approved_via: WalletTransferAutoApprovalSource;
   completed_at: string | null;
   rejection_reason: string;
   created_at: string;
@@ -405,8 +421,11 @@ export interface WalletTransfer {
 }
 
 export interface CreateWalletTransferParams {
+  /** Code ISO2 du wallet débité. */
   from_country: string;
+  /** Code ISO2 du wallet crédité — doit différer de `from_country`. */
   to_country: string;
+  /** Montant débité, dans la devise du wallet source. */
   from_amount: number | string;
 }
 

@@ -18,6 +18,9 @@ tourné que contre un `fetch` simulé. Reste avant une v1.0.0 :
       `ipWhitelist`) sont **entièrement inaccessibles via clé API** (403
       `dashboard_only`, restriction volontaire — cf. `forbid_api_key` côté
       AlphaPayBack) — documenté dans le code et le README, pas un bug à corriger.
+      **Mise à jour 2026-10-15** : `walletTransfers` n'est plus concerné —
+      ouvert à la clé API côté AlphaPayBack (`main`, 2026-09-24), cf. entrée
+      du même jour plus bas.
 - [ ] **Tester les écritures contre une vraie clé sandbox** (`sk_test_...`) —
       pas encore fait (pas de clé sandbox disponible au moment de cette
       vérification, seulement une clé live, testée en lecture seule
@@ -79,7 +82,7 @@ tourné que contre un `fetch` simulé. Reste avant une v1.0.0 :
       fenêtre anti-rejeu de 300s.
 - [x] `paginate()` — itération automatique `next` sur les listes paginées.
 - [x] 9 ressources (voir tableau README), build ESM+CJS+d.ts via tsup,
-      11 tests (`node:test`) verts.
+      14 tests (`node:test`) verts.
 - [x] `list()`/`get()` des 9 ressources vérifiés en lecture seule contre une
       vraie clé live — formes de réponse correctes, restrictions
       `dashboard_only` documentées (voir tableau README, colonne "Via clé API").
@@ -106,3 +109,16 @@ tourné que contre un `fetch` simulé. Reste avant une v1.0.0 :
       erreurs) — les 10 blocs de code extraits et vérifiés par
       `tsc --noEmit` dans un projet séparé référençant les vrais types
       compilés (`dist/index.d.ts`), pas seulement relus.
+- [x] 2026-10-15 — `walletTransfers` aligné sur AlphaPayBack `main`
+      (2026-09-24) : ouvert à la clé API (`create()` = scope PAYOUT/BOTH,
+      `list()`/`get()` = toute clé), plus `dashboard_only`. Corrigé
+      `WalletTransferStatus`, qui était **faux** (`APPROVED`/`PROCESSING`/
+      `SUCCESS`/`FAILED` n'existent pas côté API — seulement `PENDING`/
+      `COMPLETED`/`REJECTED`, cf. `apps.settlements.models.wallet_transfer`).
+      `WalletTransfer` complété (`fee_amount`, `fee_percent_applied`,
+      `auto_approved_via`, `merchant_name`, `requested_by_member`,
+      `approved_by_admin(_name)`), filtres `from_country`/`to_country` sur
+      `list()`, codes 422 documentés. 3 tests ajoutés.
+- [ ] Vérifier `walletTransfers.list()`/`get()` contre une vraie clé live
+      (lecture seule). **Jamais `create()` en live** : réserverait/déplacerait
+      réellement des fonds.

@@ -137,3 +137,67 @@ test("paginate() follows the cursor-based `next` link on transactions.list() (no
   assert.equal(requestedUrls.length, 2);
   assert.equal(requestedUrls[1], `${BASE}/transactions/?cursor=page2`); // l'URL `next` est suivie telle quelle, jamais reconstruite via un numéro de page.
 });
+
+test("creates a wallet transfer with an Idempotency-Key", async () => {
+  const calls: { url: string; init: RequestInit }[] = [];
+  const client = new AlphaPayClient({
+    apiKey: "sk_test_abc",
+    baseUrl: BASE,
+    fetch: async (url, init) => {
+      calls.push({ url: String(url), init: init! });
+      return jsonResponse({ success: true, data: { id: "wt_1", status: "PENDING", to_country: "CM" }, code: 201 }, { status: 201 });
+    },
+  });
+
+  const transfer = await client.walletTransfers.create(
+    { from_country: "BJ", to_country: "CM", from_amount: 10000 },
+    { idempotencyKey: "wt-intent-42" }
+  );
+
+  assert.equal(transfer.status, "PENDING");
+  assert.equal(calls[0]!.url, `${BASE}/wallet-transfers/`);
+  assert.equal(calls[0]!.init.method, "POST");
+  assert.deepEqual(JSON.parse(String(calls[0]!.init.body)), { from_country: "BJ", to_country: "CM", from_amount: 10000 });
+  assert.equal((calls[0]!.init.headers as Record<string, string>)["Idempotency-Key"], "wt-intent-42");
+});
+
+test("maps a 422 wallet transfer refusal to AlphaPayValidationError with its business code", async () => {
+  const client = new AlphaPayClient({
+    apiKey: "sk_test_abc",
+    baseUrl: BASE,
+    fetch: async () =>
+      jsonResponse(
+        { success: false, error: { message: "Solde disponible insuffisant.", code: "insufficient_balance" }, code: 422 },
+        { status: 422 }
+      ),
+  });
+
+  await assert.rejects(
+    () => client.walletTransfers.create({ from_country: "BJ", to_country: "CM", from_amount: 10_000_000 }),
+    (err: unknown) => {
+      assert.ok(err instanceof AlphaPayValidationError);
+      assert.equal(err.status, 422);
+      assert.equal(err.code, "insufficient_balance");
+      return true;
+    }
+  );
+});
+
+test("lists wallet transfers with status and country filters", async () => {
+  const urls: string[] = [];
+  const client = new AlphaPayClient({
+    apiKey: "sk_test_abc",
+    baseUrl: BASE,
+    fetch: async (url) => {
+      urls.push(String(url));
+      return jsonResponse({ success: true, data: { count: 0, next: null, previous: null, results: [] }, code: 200 });
+    },
+  });
+
+  await client.walletTransfers.list({ status: "PENDING", from_country: "BJ", to_country: "CM" });
+
+  const query = new URL(urls[0]!).searchParams;
+  assert.equal(query.get("status"), "PENDING");
+  assert.equal(query.get("from_country"), "BJ");
+  assert.equal(query.get("to_country"), "CM");
+});
